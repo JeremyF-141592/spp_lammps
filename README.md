@@ -14,8 +14,8 @@ Once you copied the file, compile lammps using "make serial" or "make mpi" (para
 
 You will find two quickstart scripts in the /examples folder. Simply modify the parameters in these scripts to your liking and begin the simulation by using the compiled lammps executable, ex. :
 
-> cd lammps/src
-> make serial
-> ./lmp_serial -in ../../spp_lammps/examples/in.quickstart.run
+  cd lammps/src
+  make serial
+  ./lmp_serial -in ../../spp_lammps/examples/in.quickstart.run
 
 You can then use a visualization software such as Ovito (<https://www.ovito.org/>).
