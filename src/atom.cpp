@@ -117,10 +117,10 @@ Atom::Atom(LAMMPS *lmp) : Pointers(lmp)
   q = nullptr;
   mu = nullptr;
   
-  // robot particles
+  // EVOLUTION2D
   
-  rt_state = nullptr;
-  lr_state = nullptr;
+  phi = nullptr;
+  q_reward = nullptr;
 
   // finite-size particles
 
@@ -403,9 +403,9 @@ void Atom::peratom_create()
   add_peratom("mu",&mu,DOUBLE,4);
   add_peratom("mu3",&mu,DOUBLE,3);     // just first 3 values of mu[4]
   
-  // robot particles
-  add_peratom("rt_state",&rt_state,DOUBLE,0);
-  add_peratom("lr_state",&lr_state,INT,0);
+  // EVOLUTION2D
+  add_peratom("phi",&phi,DOUBLE,2);
+  add_peratom("q_reward",&q_reward,DOUBLE,0);
   
 
   // finite size particles
@@ -2657,8 +2657,8 @@ void *Atom::extract(const char *name)
   if (strcmp(name,"f") == 0) return (void *) f;
   if (strcmp(name,"molecule") == 0) return (void *) molecule;
   
-  if (strcmp(name,"rt_state") == 0) return (void *) rt_state;
-  if (strcmp(name,"lr_state") == 0) return (void *) lr_state;
+  if (strcmp(name,"phi") == 0) return (void *) phi;
+  if (strcmp(name,"q_reward") == 0) return (void *) q_reward;
   
   
   if (strcmp(name,"q") == 0) return (void *) q;
@@ -2786,8 +2786,8 @@ int Atom::extract_datatype(const char *name)
   if (strcmp(name,"molecule") == 0) return LAMMPS_TAGINT;
   
   
-  if (strcmp(name,"rt_state") == 0) return LAMMPS_DOUBLE;
-  if (strcmp(name,"lr_state") == 0) return LAMMPS_INT;
+  if (strcmp(name,"phi") == 0) return LAMMPS_DOUBLE_2D;
+  if (strcmp(name,"q_reward") == 0) return LAMMPS_DOUBLE;
   
   if (strcmp(name,"q") == 0) return LAMMPS_DOUBLE;
   if (strcmp(name,"mu") == 0) return LAMMPS_DOUBLE_2D;

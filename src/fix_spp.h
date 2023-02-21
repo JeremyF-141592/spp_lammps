@@ -25,12 +25,9 @@ class SelfAlignment2D : public Fix {
  protected:
   class RanMars *random;
   int seed;
-  double t_start,t_stop,t_period,t_target,tsqrt;
-  double gamma1,gamma2,gamma3;
-  double D,cosphi,sinphi;
+  double D;
   double tau_v, tau_n;
   char *id_temp;
-  void compute_target();
 
 };
 

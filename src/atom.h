@@ -74,10 +74,10 @@ class Atom : protected Pointers {
   double *rmass;
   double *q, **mu;
   
-  // robot particles
+  // EVOLUTION2D
   
-  double *rt_state;
-  int *lr_state;
+  double **phi;
+  double *q_reward;
 
   // finite-size particles
 

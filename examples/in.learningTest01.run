@@ -1,20 +1,21 @@
-variable	N equal 32  # Number of particles
-variable 	L equal 10  # Halfbox length
-variable 	Seed equal 1234
-variable	runtime_Main equal 1000000 	# Runtime in timesteps
-variable	dump_freq equal 100		# Data dumping frequency
+variable	N equal 1000  # Number of particles
+variable 	L equal 50  # Halfbox length
+variable 	Seed index 2349
+variable	runtime_Main equal 5000000 	# Runtime in timesteps
+variable	dump_freq equal 1000		# Data dumping frequency
 variable	dt equal 0.001
 
 # PARAMETERS ------------------------------------------------------------
-variable	T equal 1.0 		# Temperature
-variable	D equal 0.001 		# Angular noise (applies to v and n)
-variable	tau_n equal 1.0		# Tau n (Alignment to forces carateristic time, negative values for fronters)
-variable	tau_v equal 0.1 	# Tau v (Inertia relative to propulsion)
-variable	t_torque equal 3.0	# Intensity of torque applied to tumble
-variable	r_time equal 20.0	# Run time
-variable	t_time equal 4.0	# Tumbling time is random uniform in [0, t_time[
-variable	c_speed equal 0.1	# Center speed modifier
-variable	radius equal 3.0	# Center disc radius
+variable	eta index 0 0.001 0.002 0.005 0.01
+variable	tau_v index 0.001	# Tau n (Alignment to forces carateristic time, negative values for fronters)
+variable	tau_n equal 1 # Tau v (Inertia relative to propulsion)
+variable	epsilon equal 0
+variable	alpha equal 1000
+variable	alphaq index 0.0001 0.001 0.01 0.1 1 10 100
+variable	betaq equal 1
+variable	comm_radius equal 2
+
+region light block -25 25 -$L $L -$L $L
 
 # ----------------------------------------------------------------------
 
@@ -22,8 +23,8 @@ variable	atoms_l equal 4
 variable	2L equal 2*$L
 
 variable	WCA_cut equal 1.122
-variable 	runtime_Soft equal 100000
-variable	runtime_Eq equal 100000
+variable 	runtime_Soft equal 50000
+variable	runtime_Eq equal 50000
 
 units           lj
 dimension       3
@@ -57,7 +58,15 @@ pair_coeff	* * 1 1 ${WCA_cut}  #Cutoff LJ at minima to become WCA
 reset_timestep	0
 
 #Main run
-fix             abp all spprt ${T} ${T} $D ${tau_v} ${tau_n} ${Seed} ${t_torque} ${r_time} ${t_time} ${c_speed} ${radius}
-dump            tj all custom ${dump_freq} spprt_${N}_${D}_${tau_v}_${tau_n}_${Seed}.bin x y vx vy mux muy rtstate 
+fix             evo2D all evo2D ${eta} ${tau_v} ${tau_n} ${epsilon} ${alpha} ${alphaq} ${betaq} ${comm_radius} light ${Seed} 
+dump            tj all custom ${dump_freq} evo2D_${N}_${eta}_${tau_v}_${tau_n}_${epsilon}_${alpha}_${alphaq}_${betaq}_${comm_radius}_${Seed}.cfg x y vx vy mux muy phi0 phi1 qreward
 run             ${runtime_Main}
-                                                                                                                                                                                                                
+
+clear
+next eta
+jump in.learningTest01.run
+
+clear
+next alphaq
+jump in.learningTest01.run
+

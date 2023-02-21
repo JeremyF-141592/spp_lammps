@@ -45,7 +45,7 @@ enum{ID,MOL,PROC,PROCP1,TYPE,ELEMENT,MASS,
      OMEGAX,OMEGAY,OMEGAZ,ANGMOMX,ANGMOMY,ANGMOMZ,
      TQX,TQY,TQZ,
      COMPUTE,FIX,VARIABLE,IVEC,DVEC,IARRAY,DARRAY,
-     RTSTATE};
+     PHI0, PHI1, QREWARD};
 enum{LT,LE,GT,GE,EQ,NEQ,XOR};
 
 #define ONEFIELD 32
@@ -660,9 +660,17 @@ int DumpCustom::count()
           nstride = 1;
         }
 
-      } else if(thresh_array[ithresh] == RTSTATE){
-      	ptr = &atom->rt_state[0];
-        nstride = 3;
+      } else if(thresh_array[ithresh] == PHI0){
+      	ptr = &atom->phi[0][0];
+        nstride = 2;
+      
+      } else if(thresh_array[ithresh] == PHI1){
+      	ptr = &atom->phi[0][1];
+        nstride = 2;
+      
+      } else if(thresh_array[ithresh] == QREWARD){
+      	ptr = atom->q_reward;
+        nstride = 1;
       
       } else if (thresh_array[ithresh] == X) {
         ptr = &atom->x[0][0];
@@ -1275,10 +1283,16 @@ int DumpCustom::parse_fields(int narg, char **arg)
       pack_choice[iarg] = &DumpCustom::pack_mass;
       vtype[iarg] = Dump::DOUBLE;
 
-    } else if (strcmp(arg[iarg],"rtstate") == 0) {
-      pack_choice[iarg] = &DumpCustom::pack_rtstate;
+    } else if (strcmp(arg[iarg],"phi0") == 0) {
+      pack_choice[iarg] = &DumpCustom::pack_phi0;
       vtype[iarg] = Dump::DOUBLE;
-    }else if (strcmp(arg[iarg],"x") == 0) {
+    } else if (strcmp(arg[iarg],"phi1") == 0) {
+      pack_choice[iarg] = &DumpCustom::pack_phi1;
+      vtype[iarg] = Dump::DOUBLE;
+    } else if (strcmp(arg[iarg],"qreward") == 0) {
+      pack_choice[iarg] = &DumpCustom::pack_qreward;
+      vtype[iarg] = Dump::DOUBLE;
+    } else if (strcmp(arg[iarg],"x") == 0) {
       pack_choice[iarg] = &DumpCustom::pack_x;
       vtype[iarg] = Dump::DOUBLE;
     } else if (strcmp(arg[iarg],"y") == 0) {
@@ -1792,7 +1806,9 @@ int DumpCustom::modify_param(int narg, char **arg)
     else if (strcmp(arg[1],"type") == 0) thresh_array[nthresh] = TYPE;
     else if (strcmp(arg[1],"mass") == 0) thresh_array[nthresh] = MASS;
     
-    else if (strcmp(arg[1],"rtstate") == 0) thresh_array[nthresh] = RTSTATE;
+    else if (strcmp(arg[1],"phi0") == 0) thresh_array[nthresh] = PHI0;
+    else if (strcmp(arg[1],"phi1") == 0) thresh_array[nthresh] = PHI1;
+    else if (strcmp(arg[1],"qreward") == 0) thresh_array[nthresh] = QREWARD;
 
     else if (strcmp(arg[1],"x") == 0) thresh_array[nthresh] = X;
     else if (strcmp(arg[1],"y") == 0) thresh_array[nthresh] = Y;
@@ -2225,16 +2241,38 @@ void DumpCustom::pack_mass(int n)
 
 /* ---------------------------------------------------------------------- */
 
-void DumpCustom::pack_rtstate(int n)
+void DumpCustom::pack_phi0(int n)
 {
-  double *rt_state = atom->rt_state;
+  double **phi = atom->phi;
 
   for (int i = 0; i < nchoose; i++) {
-    buf[n] = rt_state[clist[i]];
+    buf[n] = phi[clist[i]][0];
     n += size_one;
   }
 }
 
+/* ---------------------------------------------------------------------- */
+
+void DumpCustom::pack_phi1(int n)
+{
+  double **phi = atom->phi;
+
+  for (int i = 0; i < nchoose; i++) {
+    buf[n] = phi[clist[i]][1];
+    n += size_one;
+  }
+}
+/* ---------------------------------------------------------------------- */
+
+void DumpCustom::pack_qreward(int n)
+{
+  double *q_reward = atom->q_reward;
+
+  for (int i = 0; i < nchoose; i++) {
+    buf[n] = q_reward[clist[i]];
+    n += size_one;
+  }
+}
 /* ---------------------------------------------------------------------- */
 
 void DumpCustom::pack_x(int n)

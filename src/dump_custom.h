@@ -155,7 +155,9 @@ class DumpCustom : public Dump {
   void pack_type(int);
   void pack_mass(int);
 
-  void pack_rtstate(int);
+  void pack_phi0(int);
+  void pack_phi1(int);
+  void pack_qreward(int);
   
   void pack_x(int);
   void pack_y(int);

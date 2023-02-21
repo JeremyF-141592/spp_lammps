@@ -31,15 +31,12 @@ SelfAlignment2D::SelfAlignment2D(LAMMPS *lmp, int narg, char **arg) :
   
 {
 
-  if (narg != 9) error->all(FLERR,"Illegal selfAlignment2D command");
-  t_start = utils::numeric(FLERR,arg[3],false,lmp);
-  t_target = t_start;
-  t_stop = utils::numeric(FLERR,arg[4],false,lmp);
-  D = utils::numeric(FLERR,arg[5],false,lmp);
-  if (D <= 0.0) error->all(FLERR,"Diffusion coefficient must be > 0.0");
-  tau_v = utils::numeric(FLERR,arg[6],false,lmp);
-  tau_n = utils::numeric(FLERR,arg[7],false,lmp);
-  seed = utils::numeric(FLERR,arg[8],false,lmp);
+  if (narg != 7) error->all(FLERR,"Illegal selfAlignment2D command");
+  D = utils::numeric(FLERR,arg[3],false,lmp);
+  if (D < 0.0) error->all(FLERR,"Diffusion coefficient must be >= 0.0");
+  tau_v = utils::numeric(FLERR,arg[4],false,lmp);
+  tau_n = utils::numeric(FLERR,arg[5],false,lmp);
+  seed = utils::numeric(FLERR,arg[6],false,lmp);
   if (seed <= 0) error->all(FLERR,"Illegal selfAlignment2D command");
 
   // initialize Marsaglia RNG with processor-unique seed
@@ -68,31 +65,8 @@ int SelfAlignment2D::setmask()
 
 void SelfAlignment2D::init()
 {
-compute_target();
-
-
-gamma1 = D / force->boltz;
-gamma2 = sqrt(2*D);
-gamma3 = sqrt(2*3*D);
-
 
 }
-
-/* ----------------------------------------------------------------------
-   set current t_target and t_sqrt
-------------------------------------------------------------------------- */
-
-void SelfAlignment2D::compute_target()
-{
-  double delta = update->ntimestep - update->beginstep;
-  if (delta != 0.0) delta /= update->endstep - update->beginstep;
-
-  // Only homogeneous temperature supported
-  t_target = t_start + delta * (t_stop-t_start);
-  tsqrt = sqrt(t_target);
-
-}
-
 
 
 void SelfAlignment2D::initial_integrate(int vflag)
@@ -121,9 +95,6 @@ void SelfAlignment2D::initial_integrate(int vflag)
   dt = update->dt;
   sqrtdt = sqrt(dt);
 
-  // set square root of temperature
-  compute_target();
-
   // Set initial particle orientation
  if (step <= 1) {
     for (int i = 0; i < nlocal; i++){       
@@ -147,8 +118,7 @@ void SelfAlignment2D::initial_integrate(int vflag)
       double ang_noise = random->gaussian();
       ang_noise *= sqrt(2*D*dt);
       
-      
-      // Update Active Vector
+       // Update Active Vector
       double mux, muy;
 
       mux = (mu[i][1]*mu[i][1]*v[i][0] - mu[i][0]*mu[i][1]*v[i][1]) / tau_n;
@@ -158,8 +128,8 @@ void SelfAlignment2D::initial_integrate(int vflag)
       mu[i][1] += dt * muy;
      
       // Update velocities
-      v[i][0] += (mu[i][0]*dt - dt*v[i][0] + dt*f[i][0]/t_target)/tau_v;
-      v[i][1] += (mu[i][1]*dt - dt*v[i][1] +  dt*f[i][1]/t_target)/tau_v;
+      v[i][0] += (mu[i][0]*dt - dt*v[i][0] + dt*f[i][0])/tau_v;
+      v[i][1] += (mu[i][1]*dt - dt*v[i][1] +  dt*f[i][1])/tau_v;
       v[i][2] = 0;
       
       // Apply angular noise
@@ -183,7 +153,7 @@ void SelfAlignment2D::initial_integrate(int vflag)
       // Update positions
       x[i][0] +=  v[i][0]*dt;
       x[i][1] +=  v[i][1]*dt;
-      x[i][2] = 0;                                                                                 
+      x[i][2] = 0;                                                                  
       }
 }
 
