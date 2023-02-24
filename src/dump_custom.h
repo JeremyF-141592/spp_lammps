@@ -157,6 +157,7 @@ class DumpCustom : public Dump {
 
   void pack_phi0(int);
   void pack_phi1(int);
+  void pack_phi2(int);
   void pack_qreward(int);
   
   void pack_x(int);

@@ -404,7 +404,7 @@ void Atom::peratom_create()
   add_peratom("mu3",&mu,DOUBLE,3);     // just first 3 values of mu[4]
   
   // EVOLUTION2D
-  add_peratom("phi",&phi,DOUBLE,2);
+  add_peratom("phi",&phi,DOUBLE,3);
   add_peratom("q_reward",&q_reward,DOUBLE,0);
   
 

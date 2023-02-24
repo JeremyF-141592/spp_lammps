@@ -45,7 +45,7 @@ enum{ID,MOL,PROC,PROCP1,TYPE,ELEMENT,MASS,
      OMEGAX,OMEGAY,OMEGAZ,ANGMOMX,ANGMOMY,ANGMOMZ,
      TQX,TQY,TQZ,
      COMPUTE,FIX,VARIABLE,IVEC,DVEC,IARRAY,DARRAY,
-     PHI0, PHI1, QREWARD};
+     PHI0, PHI1, PHI2, QREWARD};
 enum{LT,LE,GT,GE,EQ,NEQ,XOR};
 
 #define ONEFIELD 32
@@ -666,6 +666,10 @@ int DumpCustom::count()
       
       } else if(thresh_array[ithresh] == PHI1){
       	ptr = &atom->phi[0][1];
+        nstride = 2;
+      
+      } else if(thresh_array[ithresh] == PHI2){
+      	ptr = &atom->phi[0][2];
         nstride = 2;
       
       } else if(thresh_array[ithresh] == QREWARD){
@@ -1289,6 +1293,9 @@ int DumpCustom::parse_fields(int narg, char **arg)
     } else if (strcmp(arg[iarg],"phi1") == 0) {
       pack_choice[iarg] = &DumpCustom::pack_phi1;
       vtype[iarg] = Dump::DOUBLE;
+    } else if (strcmp(arg[iarg],"phi2") == 0) {
+      pack_choice[iarg] = &DumpCustom::pack_phi2;
+      vtype[iarg] = Dump::DOUBLE;
     } else if (strcmp(arg[iarg],"qreward") == 0) {
       pack_choice[iarg] = &DumpCustom::pack_qreward;
       vtype[iarg] = Dump::DOUBLE;
@@ -1808,6 +1815,7 @@ int DumpCustom::modify_param(int narg, char **arg)
     
     else if (strcmp(arg[1],"phi0") == 0) thresh_array[nthresh] = PHI0;
     else if (strcmp(arg[1],"phi1") == 0) thresh_array[nthresh] = PHI1;
+    else if (strcmp(arg[1],"phi2") == 0) thresh_array[nthresh] = PHI2;
     else if (strcmp(arg[1],"qreward") == 0) thresh_array[nthresh] = QREWARD;
 
     else if (strcmp(arg[1],"x") == 0) thresh_array[nthresh] = X;
@@ -2247,6 +2255,18 @@ void DumpCustom::pack_phi0(int n)
 
   for (int i = 0; i < nchoose; i++) {
     buf[n] = phi[clist[i]][0];
+    n += size_one;
+  }
+}
+
+/* ---------------------------------------------------------------------- */
+
+void DumpCustom::pack_phi2(int n)
+{
+  double **phi = atom->phi;
+
+  for (int i = 0; i < nchoose; i++) {
+    buf[n] = phi[clist[i]][2];
     n += size_one;
   }
 }

@@ -92,8 +92,8 @@ void Evolution2D::initial_integrate(int vflag)
   double *q_reward = atom->q_reward;
   double mag;
 
-  double F_min = 0.001;
-  double D_min = 0.001;
+  double F_min = 0.01;
+  double D_min = 0;
 
 
   // Using 'radius' to store particle orentiation angle
@@ -116,20 +116,22 @@ void Evolution2D::initial_integrate(int vflag)
   // Set initial particle orientation
  if (step <= 1) {
     for (int i = 0; i < nlocal; i++){       
-       // Initialise Active vector with random direction at beginining of simulation
+       // Initialize Active vector with random direction at beginining of simulation
        mu[i][0] = random->gaussian();       
        mu[i][1] = random->gaussian(); 
        mu[i][2] = 0; // 2D
 
-       // Normailise active vector
+       // Normalize active vector
        mag = sqrt(pow(mu[i][0],2)+pow(mu[i][1],2));
        double mag_inv = 1.0 / mag;
        mu[i][0] *= mag_inv;
        mu[i][1] *= mag_inv;
     
-       // Initialise parameters with random direction at beginining of simulation
+       // Initialize parameters with random direction at beginining of simulation
        phi[i][0] = (2.0*random->uniform()-1.0) * 3.141592;       
        phi[i][1] = (2.0*random->uniform()-1.0) * 3.141592; 
+       phi[i][2] = (2.0*random->uniform()-1.0) * 3.141592; 
+
 
        q_reward[i] = 0.0;
 
@@ -138,7 +140,7 @@ void Evolution2D::initial_integrate(int vflag)
   int *ilist,*jlist,*numneigh,**firstneigh;
   int i, j, ii, jj, inum, jnum;
   double rsq, xtmp, ytmp, ztmp, delx, dely, delz, fpair;
-  NeighList *list = neighbor->lists[0];  //Probably a bad idea ?
+  NeighList *list = neighbor->lists[0];  // Works but might break
  
   inum = list->inum;
   ilist = list->ilist;
@@ -167,6 +169,7 @@ void Evolution2D::initial_integrate(int vflag)
       if (rsq < comm_sq) {
         phi[i][0] += alpha* sin(phi[j][0] - phi[i][0]) * dt;
 	phi[i][1] += alpha* sin(phi[j][1] - phi[i][1]) * dt;
+	phi[i][2] += alpha* sin(phi[j][2] - phi[i][2]) * dt;
 	q_reward[i] += alpha* (q_reward[j] - q_reward[i]) * dt;
       }
     }
@@ -187,10 +190,14 @@ void Evolution2D::initial_integrate(int vflag)
       // Mutation noise
       phi[i][0] += random->gaussian() * sqrt(2*dt*eta);
       phi[i][1] += random->gaussian() * sqrt(2*dt*eta);
+      phi[i][2] += random->gaussian() * sqrt(2*dt*eta);
       
       double w0 = 0.5*(1 + cos(phi[i][0]));
-      double w1 = cos(phi[i][1]);
-      double ui = 0.5 * (1 + tanh((w0 - q_received)/w1));
+      double w1 = 0.5*(1 + cos(phi[i][1]));
+      double w2 = 0.5*(1 + cos(phi[i][2]));
+
+      double th = tanh((w0 - q_received)/w1);
+      double ui = 0.5 * (1+th) * w2 + 0.5 * (1-th) * (1-w2);
     
       double D = (1-ui) + D_min*ui;
       double Fa = ui + F_min*(1-ui);

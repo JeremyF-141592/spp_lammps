@@ -43,9 +43,13 @@ def cfg_to_csv(path_to_file, destination_folder):
     return export_path
 
 
+def make_dir(files):
+    destination = dict()
+
+
 if __name__ == "__main__":
-    for p in glob("/home/morphoswarm/Documents/spp_lammps/learning/simple_learning/*.cfg"):
-        p2 = cfg_to_csv(p, "/home/morphoswarm/Documents/spp_lammps/learning/simple_learning/")
+    for p in glob("/media/morphoswarm/MSSimulations/spp_lammps/learning/uniform_eta/*.cfg"):
+        p2 = cfg_to_csv(p, "/media/morphoswarm/MSSimulations/spp_lammps/learning/uniform_eta/CSV")
         print(p2)
 
 
