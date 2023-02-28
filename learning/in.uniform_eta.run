@@ -13,7 +13,7 @@ variable	epsilon equal 0
 variable	alpha index 1000
 variable	alphaq index 1000
 variable	betaq equal 1
-variable	comm_radius equal 2
+variable	comm_radius equal 2.0
 
 region light block -$L $L -$L $L -$L $L
 

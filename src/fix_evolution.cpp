@@ -147,6 +147,7 @@ void Evolution2D::initial_integrate(int vflag)
   numneigh = list->numneigh;
   firstneigh = list->firstneigh;
   // Update parameters and reward
+  if(step > 10){
   for (ii = 0; ii < inum; ii++) {
     i = ilist[ii];
     xtmp = x[i][0];
@@ -174,6 +175,7 @@ void Evolution2D::initial_integrate(int vflag)
       }
     }
 
+  }
   }
   // Integrator 
   for (i = 0; i < nlocal; i++)
