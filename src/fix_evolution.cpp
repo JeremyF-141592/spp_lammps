@@ -159,8 +159,7 @@ void Evolution2D::initial_integrate(int vflag)
     for (jj = 0; jj < jnum; jj++) {
       j = jlist[jj];
       j &= NEIGHMASK;
-      if (q_reward[i] < q_reward[j]) continue;
-      if(i==j) continue;
+      if (q_reward[i] + alpha*dt > q_reward[j]) continue;
       delx = xtmp - x[j][0];
       dely = ytmp - x[j][1];
       delz = ztmp - x[j][2];
