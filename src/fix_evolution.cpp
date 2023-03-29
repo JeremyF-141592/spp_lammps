@@ -147,7 +147,6 @@ void Evolution2D::initial_integrate(int vflag)
   numneigh = list->numneigh;
   firstneigh = list->firstneigh;
   // Update parameters and reward
-  if(step > 10){
   for (ii = 0; ii < inum; ii++) {
     i = ilist[ii];
     xtmp = x[i][0];
@@ -159,7 +158,8 @@ void Evolution2D::initial_integrate(int vflag)
     for (jj = 0; jj < jnum; jj++) {
       j = jlist[jj];
       j &= NEIGHMASK;
-      if (q_reward[i] + alpha*dt > q_reward[j]) continue;
+      if (q_reward[i] < q_reward[j]) continue;
+      if(i==j) continue;
       delx = xtmp - x[j][0];
       dely = ytmp - x[j][1];
       delz = ztmp - x[j][2];
@@ -174,7 +174,6 @@ void Evolution2D::initial_integrate(int vflag)
       }
     }
 
-  }
   }
   // Integrator 
   for (i = 0; i < nlocal; i++)
@@ -210,8 +209,8 @@ void Evolution2D::initial_integrate(int vflag)
        // Update Active Vector
       double mux, muy;
 
-      mux = (mu[i][1]*mu[i][1]*v[i][0] - mu[i][0]*mu[i][1]*v[i][1]) / tau_n;
-      muy = (mu[i][0]*mu[i][0]*v[i][1] - mu[i][0]*mu[i][1]*v[i][0]) / tau_n;
+      mux = epsilon*(mu[i][1]*mu[i][1]*v[i][0] - mu[i][0]*mu[i][1]*v[i][1]) / tau_n;
+      muy = epsilon*(mu[i][0]*mu[i][0]*v[i][1] - mu[i][0]*mu[i][1]*v[i][0]) / tau_n;
       
       // Update velocities
       v[i][0] += dt* (Fa*mu[i][0] - v[i][0] + f[i][0])/tau_v;
