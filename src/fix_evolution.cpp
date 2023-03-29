@@ -92,7 +92,7 @@ void Evolution2D::initial_integrate(int vflag)
   double *q_reward = atom->q_reward;
   double mag;
 
-  double F_min = 0.01;
+  double F_min = 0;
   double D_min = 0;
 
 
@@ -112,9 +112,9 @@ void Evolution2D::initial_integrate(int vflag)
   // set timestep here since dt may have changed or come via rRESPA
   dt = update->dt;
   sqrtdt = sqrt(dt);
-
+  
   // Set initial particle orientation
- if (step <= 1) {
+  if (step <= 1) { 
     for (int i = 0; i < nlocal; i++){       
        // Initialize Active vector with random direction at beginining of simulation
        mu[i][0] = random->gaussian();       
@@ -128,14 +128,14 @@ void Evolution2D::initial_integrate(int vflag)
        mu[i][1] *= mag_inv;
     
        // Initialize parameters with random direction at beginining of simulation
-       phi[i][0] = (2.0*random->uniform()-1.0) * 3.141592;       
-       phi[i][1] = (2.0*random->uniform()-1.0) * 3.141592; 
-       phi[i][2] = (2.0*random->uniform()-1.0) * 3.141592; 
+       phi[i][0] = (2.*random->uniform()-1.) * 3.14159265;       
+       phi[i][1] = (2.*random->uniform()-1.) * 3.14159265; 
+       phi[i][2] = (2.*random->uniform()-1.) * 3.14159265; 
 
 
        q_reward[i] = 0.0;
 
-    }
+       }
   }
   int *ilist,*jlist,*numneigh,**firstneigh;
   int i, j, ii, jj, inum, jnum;
@@ -147,6 +147,7 @@ void Evolution2D::initial_integrate(int vflag)
   numneigh = list->numneigh;
   firstneigh = list->firstneigh;
   // Update parameters and reward
+  if(step > 10){
   for (ii = 0; ii < inum; ii++) {
     i = ilist[ii];
     xtmp = x[i][0];
@@ -158,8 +159,7 @@ void Evolution2D::initial_integrate(int vflag)
     for (jj = 0; jj < jnum; jj++) {
       j = jlist[jj];
       j &= NEIGHMASK;
-      if (q_reward[i] < q_reward[j]) continue;
-      if(i==j) continue;
+      if (q_reward[i] - q_reward[j] > 0.000001) continue;
       delx = xtmp - x[j][0];
       dely = ytmp - x[j][1];
       delz = ztmp - x[j][2];
@@ -175,8 +175,10 @@ void Evolution2D::initial_integrate(int vflag)
     }
 
   }
+  }
   // Integrator 
-  for (i = 0; i < nlocal; i++)
+  for (int i = 0; i < nlocal; i++)
+	  
     if (mask[i] & groupbit) {
 
       if(region->match(x[i][0], x[i][1], x[i][2])){
@@ -209,8 +211,8 @@ void Evolution2D::initial_integrate(int vflag)
        // Update Active Vector
       double mux, muy;
 
-      mux = epsilon*(mu[i][1]*mu[i][1]*v[i][0] - mu[i][0]*mu[i][1]*v[i][1]) / tau_n;
-      muy = epsilon*(mu[i][0]*mu[i][0]*v[i][1] - mu[i][0]*mu[i][1]*v[i][0]) / tau_n;
+      mux = epsilon * (mu[i][1]*mu[i][1]*v[i][0] - mu[i][0]*mu[i][1]*v[i][1]) / tau_n;
+      muy = epsilon * (mu[i][0]*mu[i][0]*v[i][1] - mu[i][0]*mu[i][1]*v[i][0]) / tau_n;
       
       // Update velocities
       v[i][0] += dt* (Fa*mu[i][0] - v[i][0] + f[i][0])/tau_v;
@@ -232,8 +234,9 @@ void Evolution2D::initial_integrate(int vflag)
       // Update positions
       x[i][0] +=  v[i][0]*dt;
       x[i][1] +=  v[i][1]*dt;
-      x[i][2] = 0;                                                                  
-      }
+      x[i][2] = 0; 
+
+    }
 }
 
 /* ---------------------------------------------------------------------- */
