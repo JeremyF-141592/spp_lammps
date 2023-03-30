@@ -159,7 +159,7 @@ void Evolution2D::initial_integrate(int vflag)
     for (jj = 0; jj < jnum; jj++) {
       j = jlist[jj];
       j &= NEIGHMASK;
-      if (q_reward[i] - q_reward[j] > 0.000001) continue;
+      
       delx = xtmp - x[j][0];
       dely = ytmp - x[j][1];
       delz = ztmp - x[j][2];
@@ -167,10 +167,18 @@ void Evolution2D::initial_integrate(int vflag)
       if(rsq == 0) continue;
 
       if (rsq < comm_sq) {
-        phi[i][0] += alpha* sin(phi[j][0] - phi[i][0]) * dt;
-	phi[i][1] += alpha* sin(phi[j][1] - phi[i][1]) * dt;
-	phi[i][2] += alpha* sin(phi[j][2] - phi[i][2]) * dt;
-	q_reward[i] += alpha* (q_reward[j] - q_reward[i]) * dt;
+        if (q_reward[j]  >= q_reward[i]){
+	  phi[i][0] += alpha* sin(phi[j][0] - phi[i][0]) * dt;
+	  phi[i][1] += alpha* sin(phi[j][1] - phi[i][1]) * dt;
+	  phi[i][2] += alpha* sin(phi[j][2] - phi[i][2]) * dt;
+	  q_reward[i] += alpha* (q_reward[j] - q_reward[i]) * dt;
+	}
+	if (q_reward[i]  >= q_reward[j]){
+	  phi[j][0] += alpha* sin(phi[i][0] - phi[j][0]) * dt;
+	  phi[j][1] += alpha* sin(phi[i][1] - phi[j][1]) * dt;
+	  phi[j][2] += alpha* sin(phi[i][2] - phi[j][2]) * dt;
+	  q_reward[j] += alpha* (q_reward[i] - q_reward[j]) * dt;
+	}
       }
     }
 
@@ -198,9 +206,16 @@ void Evolution2D::initial_integrate(int vflag)
       double w1 = 0.5*(1 + cos(phi[i][1]));
       double w2 = 0.5*(1 + cos(phi[i][2]));
 
-      double th = tanh((w0 - q_received)/w1);
-      double ui = 0.5 * (1+th) * w2 + 0.5 * (1-th) * (1-w2);
+      //double th = tanh((w0 - q_received)/w1);
+      //double ui = 0.5 * (1+th) * w2 + 0.5 * (1-th) * (1-w2);
     
+      double ui = 0;
+      if(q_received <= 0.5){
+	ui = w0;
+      } else {
+	ui = w1;
+      }
+
       double D = (1-ui) + D_min*ui;
       double Fa = ui + F_min*(1-ui);
 
