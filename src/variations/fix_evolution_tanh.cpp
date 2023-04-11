@@ -203,11 +203,13 @@ void Evolution2D::initial_integrate(int vflag)
       }
       // Update reward
       q_reward[i] += alphaq*(q_received - betaq * q_reward[i]) *dt;
+
+
+      double th = tanh((w0 - q_received)/w1);
+      double ui = 0.5 * (1+th) * w2 + 0.5 * (1-th) * (1-w2);
       
-      double D = 0.01;
-      double Fa = w0;
-      if(q_received > 0.5)
-        Fa = w1;
+      double Fa = ui;
+      double D = 1-ui;
     
 
       // Update velocities

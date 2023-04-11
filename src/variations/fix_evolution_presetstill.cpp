@@ -127,11 +127,11 @@ void Evolution2D::initial_integrate(int vflag)
        mu[i][0] *= mag_inv;
        mu[i][1] *= mag_inv;
     
-       // Initialize parameters with random direction at beginining of simulation
-       phi[i][0] = (2.0*random->uniform() - 1.0) * 3.14159265;
-       phi[i][1] = (2.0*random->uniform() - 1.0) * 3.14159265;
-       phi[i][2] = (2.0*random->uniform() - 1.0) * 3.14159265;
-	
+       // Internal parameters are irrelevant in preset
+       phi[i][0] = 0.0;       
+       phi[i][1] = 0.0; 
+       phi[i][2] = 0.0; 
+       
        q_reward[i] = 0.0;
        }
   }
@@ -187,28 +187,18 @@ void Evolution2D::initial_integrate(int vflag)
 	  
     if (mask[i] & groupbit) {
       
-      // Mutation noise
-      phi[i][0] += random->gaussian() * sqrt(2*dt*eta);
-      phi[i][1] += random->gaussian() * sqrt(2*dt*eta);
-      phi[i][2] += random->gaussian() * sqrt(2*dt*eta);
-      
-      double w0 = 0.5*(1 + cos(phi[i][0]));
-      double w1 = 0.5*(1 + cos(phi[i][1]));
-      double w2 = 0.5*(1 + cos(phi[i][2]));
-       
+      double Fa = 0.;
+      double D = 0.;      
       if(region->match(x[i][0], x[i][1], x[i][2])){
         q_received = 0.75;
+      	Fa = 0.;
       } else {
         q_received = 0.25;
+      	Fa = 1.;
       }
       // Update reward
       q_reward[i] += alphaq*(q_received - betaq * q_reward[i]) *dt;
-      
-      double D = 0.01;
-      double Fa = w0;
-      if(q_received > 0.5)
-        Fa = w1;
-    
+
 
       // Update velocities
       v[i][0] += dt*(Fa*mu[i][0] - v[i][0] + f[i][0])/tau_v;
