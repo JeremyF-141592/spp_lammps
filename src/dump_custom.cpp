@@ -45,7 +45,7 @@ enum{ID,MOL,PROC,PROCP1,TYPE,ELEMENT,MASS,
      OMEGAX,OMEGAY,OMEGAZ,ANGMOMX,ANGMOMY,ANGMOMZ,
      TQX,TQY,TQZ,
      COMPUTE,FIX,VARIABLE,IVEC,DVEC,IARRAY,DARRAY,
-     PHI0, PHI1, PHI2, QREWARD};
+     PHI0, PHI1, PHI2, QREWARD, OMEGAMU, BIAS};
 enum{LT,LE,GT,GE,EQ,NEQ,XOR};
 
 #define ONEFIELD 32
@@ -676,6 +676,14 @@ int DumpCustom::count()
       	ptr = atom->q_reward;
         nstride = 1;
       
+      } else if(thresh_array[ithresh] == OMEGAMU){
+      	ptr = &atom->omega_mu[0];
+        nstride = 1;
+      
+      } else if(thresh_array[ithresh] == BIAS){
+      	ptr = &atom->bias[0];
+        nstride = 1;
+      
       } else if (thresh_array[ithresh] == X) {
         ptr = &atom->x[0][0];
         nstride = 3;
@@ -1299,6 +1307,12 @@ int DumpCustom::parse_fields(int narg, char **arg)
     } else if (strcmp(arg[iarg],"qreward") == 0) {
       pack_choice[iarg] = &DumpCustom::pack_qreward;
       vtype[iarg] = Dump::DOUBLE;
+    } else if (strcmp(arg[iarg],"omega_mu") == 0) {
+      pack_choice[iarg] = &DumpCustom::pack_omegamu;
+      vtype[iarg] = Dump::DOUBLE;
+    } else if (strcmp(arg[iarg],"bias") == 0) {
+      pack_choice[iarg] = &DumpCustom::pack_bias;
+      vtype[iarg] = Dump::DOUBLE;
     } else if (strcmp(arg[iarg],"x") == 0) {
       pack_choice[iarg] = &DumpCustom::pack_x;
       vtype[iarg] = Dump::DOUBLE;
@@ -1817,6 +1831,9 @@ int DumpCustom::modify_param(int narg, char **arg)
     else if (strcmp(arg[1],"phi1") == 0) thresh_array[nthresh] = PHI1;
     else if (strcmp(arg[1],"phi2") == 0) thresh_array[nthresh] = PHI2;
     else if (strcmp(arg[1],"qreward") == 0) thresh_array[nthresh] = QREWARD;
+    
+    else if (strcmp(arg[1],"omega_mu") == 0) thresh_array[nthresh] = OMEGAMU;
+    else if (strcmp(arg[1],"bias") == 0) thresh_array[nthresh] = BIAS;
 
     else if (strcmp(arg[1],"x") == 0) thresh_array[nthresh] = X;
     else if (strcmp(arg[1],"y") == 0) thresh_array[nthresh] = Y;
@@ -2244,6 +2261,30 @@ void DumpCustom::pack_mass(int n)
       buf[n] = mass[type[clist[i]]];
       n += size_one;
     }
+  }
+}
+
+/* ---------------------------------------------------------------------- */
+
+void DumpCustom::pack_omegamu(int n)
+{
+  double *omega_mu = atom->omega_mu;
+
+  for (int i = 0; i < nchoose; i++) {
+    buf[n] = omega_mu[clist[i]];
+    n += size_one;
+  }
+}
+
+/* ---------------------------------------------------------------------- */
+
+void DumpCustom::pack_bias(int n)
+{
+  double *bias = atom->bias;
+
+  for (int i = 0; i < nchoose; i++) {
+    buf[n] = bias[clist[i]];
+    n += size_one;
   }
 }
 

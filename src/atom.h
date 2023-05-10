@@ -78,6 +78,12 @@ class Atom : protected Pointers {
   
   double **phi;
   double *q_reward;
+  
+  
+  // TOOTHBRUSH
+  double *omega_mu;
+  double *bias;
+
 
   // finite-size particles
 

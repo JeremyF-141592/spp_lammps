@@ -121,6 +121,11 @@ Atom::Atom(LAMMPS *lmp) : Pointers(lmp)
   
   phi = nullptr;
   q_reward = nullptr;
+  
+  // TOOTHBRUSH
+  
+  omega_mu = nullptr;
+  bias = nullptr;
 
   // finite-size particles
 
@@ -406,6 +411,11 @@ void Atom::peratom_create()
   // EVOLUTION2D
   add_peratom("phi",&phi,DOUBLE,3);
   add_peratom("q_reward",&q_reward,DOUBLE,0);
+  
+  // TOOTHBRUSH
+  add_peratom("omega_mu",&omega_mu,DOUBLE,0);  
+  add_peratom("bias",&bias,DOUBLE,0);
+
   
 
   // finite size particles
@@ -2659,6 +2669,9 @@ void *Atom::extract(const char *name)
   
   if (strcmp(name,"phi") == 0) return (void *) phi;
   if (strcmp(name,"q_reward") == 0) return (void *) q_reward;
+  
+  if (strcmp(name,"omega_mu") == 0) return (void *) omega_mu;
+  if (strcmp(name,"bias") == 0) return (void *) bias;
   
   
   if (strcmp(name,"q") == 0) return (void *) q;

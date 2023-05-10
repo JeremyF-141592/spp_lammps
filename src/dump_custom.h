@@ -160,6 +160,9 @@ class DumpCustom : public Dump {
   void pack_phi2(int);
   void pack_qreward(int);
   
+  void pack_omegamu(int);
+  void pack_bias(int);
+  
   void pack_x(int);
   void pack_y(int);
   void pack_z(int);

@@ -1,19 +1,19 @@
 #ifdef FIX_CLASS
 
-FixStyle(spp, SelfAlignment2D)
+FixStyle(toothbrush, Toothbrush2D)
 
 #else
-#ifndef LMP_selfAlignment2D_H
-#define LMP_selfAlignment2D_H
+#ifndef LMP_toothbrush2D_H
+#define LMP_toothbrush2D_H
 
 #include "fix.h"
 
 namespace LAMMPS_NS {
 
-class SelfAlignment2D : public Fix {
+class Toothbrush2D : public Fix {
  public:
-  SelfAlignment2D(class LAMMPS *, int, char **);
-  virtual ~SelfAlignment2D();
+  Toothbrush2D(class LAMMPS *, int, char **);
+  virtual ~Toothbrush2D();
   int setmask();
   virtual void init();
   virtual void initial_integrate(int);
@@ -28,6 +28,7 @@ class SelfAlignment2D : public Fix {
   double D;
   int epsilon;
   double tau_v, tau_n;
+  double J, bias_std;
   char *id_temp;
 
 };
