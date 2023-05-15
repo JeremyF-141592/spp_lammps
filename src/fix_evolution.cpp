@@ -172,9 +172,9 @@ void Evolution2D::initial_integrate(int vflag)
 	        q_reward[i] += alpha* (q_reward[j] - q_reward[i]) * dt;
 	      }
 	      if (q_reward[i]  >= q_reward[j]){
-	        phi[j][0] += alpha* sin(2*(phi[i][0] - phi[j][0])) * dt;
-	        phi[j][1] += alpha* sin(2*(phi[i][1] - phi[j][1])) * dt;
-	        phi[j][2] += alpha* sin(2*(phi[i][2] - phi[j][2])) * dt;
+	        phi[j][0] += alpha* abs(cos(phi[i][0]) - cos(phi[j][0])) * dt;
+	        phi[j][1] += alpha* abs(cos(phi[i][1]) - cos(phi[j][1])) * dt;
+	        phi[j][2] += alpha* abs(cos(phi[i][2]) - cos(phi[j][2])) * dt;
 	        q_reward[j] += alpha* (q_reward[i] - q_reward[j]) * dt;
 	      }
       }
@@ -192,9 +192,9 @@ void Evolution2D::initial_integrate(int vflag)
       phi[i][1] += random->gaussian() * sqrt(2*dt*eta);
       phi[i][2] += random->gaussian() * sqrt(2*dt*eta);
       
-      double w0 = 0.5*(1 + cos(2*phi[i][0]));
-      double w1 = 0.5*(1 + cos(2*phi[i][1]));
-      double w2 = 0.5*(1 + cos(2*phi[i][2]));
+      double w0 = 0.5*(1 + cos(phi[i][0]));
+      double w1 = 0.5*(1 + cos(phi[i][1]));
+      double w2 = 0.5*(1 + cos(phi[i][2]));
        
       if(region->match(x[i][0], x[i][1], x[i][2])){
         q_received = 0.75;
