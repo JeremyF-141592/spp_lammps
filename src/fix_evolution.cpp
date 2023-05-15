@@ -267,9 +267,7 @@ void Evolution2D::initial_integrate(int vflag)
         Fa = phi[i][0];
         break;
       }
-      if( phi[i][1] >= 0.5) Fa = 2*phi[i][1] - 1;
-      
-      
+            
       double D = 0.01;
     
 
