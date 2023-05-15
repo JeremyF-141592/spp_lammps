@@ -23,6 +23,8 @@
 #include "neighbor.h"
 #include "pair.h"
 
+#define PI 3.14159265
+
 
 using namespace LAMMPS_NS;
 using namespace FixConst;
@@ -34,7 +36,7 @@ Evolution2D::Evolution2D(LAMMPS *lmp, int narg, char **arg) :
   
 {
 
-  if (narg != 13) error->all(FLERR,"Illegal evolution2D command");
+  if (narg != 14) error->all(FLERR,"Illegal evolution2D command");
   eta = utils::numeric(FLERR,arg[3],false,lmp);
   if (eta < 0.0) error->all(FLERR,"Diffusion coefficient must be >= 0.0");
   tau_v = utils::numeric(FLERR,arg[4],false,lmp);
@@ -46,7 +48,8 @@ Evolution2D::Evolution2D(LAMMPS *lmp, int narg, char **arg) :
   comm_radius = utils::numeric(FLERR,arg[10],false,lmp);
   region = domain->get_region_by_id(arg[11]);
   idregion = utils::strdup(arg[11]);
-  seed = utils::numeric(FLERR,arg[12],false,lmp);
+  controller_flag = utils::numeric(FLERR,arg[12],false,lmp);
+  seed = utils::numeric(FLERR,arg[13],false,lmp);
   if (seed <= 0) error->all(FLERR,"Illegal evolution2D command");
 
   // initialize Marsaglia RNG with processor-unique seed
@@ -76,6 +79,17 @@ int Evolution2D::setmask()
 void Evolution2D::init()
 {
 
+}
+
+float wca(float r){
+  float a = 8;
+  bool leaky = true;
+  
+  if(leaky) r += (pow(2, 1./a)-1);
+  if(r > pow(2, 1./a)){
+    return 0.0;
+  }
+  return 4 * (pow(r, -2*a) - pow(r, -a)) + 1;
 }
 
 
@@ -128,10 +142,9 @@ void Evolution2D::initial_integrate(int vflag)
        mu[i][1] *= mag_inv;
     
        // Initialize parameters with random direction at beginining of simulation
-       phi[i][0] = (2.0*random->uniform() - 1.0) * 3.14159265;
-       phi[i][1] = (2.0*random->uniform() - 1.0) * 3.14159265;
-       phi[i][2] = (2.0*random->uniform() - 1.0) * 3.14159265;
-	
+       phi[i][0] = random->uniform();
+       phi[i][1] = random->uniform();
+       phi[i][2] = random->uniform();
        q_reward[i] = 0.0;
        }
   }
@@ -145,7 +158,7 @@ void Evolution2D::initial_integrate(int vflag)
   numneigh = list->numneigh;
   firstneigh = list->firstneigh;
   // Update parameters and reward
-  if(step > 10){
+  if(step > 1){
   for (ii = 0; ii < inum; ii++) {
     i = ilist[ii];
     xtmp = x[i][0];
@@ -166,18 +179,30 @@ void Evolution2D::initial_integrate(int vflag)
 
       if (rsq < comm_sq) {
         if (q_reward[j]  >= q_reward[i]){
+	        phi[i][0] += alpha* (phi[j][0] - phi[i][0]) * dt;
+	        phi[i][1] += alpha* (phi[j][1] - phi[i][1]) * dt;
+	        phi[i][2] += alpha* (phi[j][2] - phi[i][2]) * dt;
+	        q_reward[i] += alpha* (q_reward[j] - q_reward[i]) * dt;
+	      }
+	      if (q_reward[i]  >= q_reward[j]){
+	        phi[j][0] += alpha* (phi[i][0] - phi[j][0]) * dt;
+	        phi[j][1] += alpha* (phi[i][1] - phi[j][1]) * dt;
+	        phi[j][2] += alpha* (phi[i][2] - phi[j][2]) * dt;
+		q_reward[j] += alpha* (q_reward[i] - q_reward[j]) * dt;
+	      }
+      }
+      /*if (q_reward[j]  >= q_reward[i]){
 	        phi[i][0] += alpha* sin(phi[j][0] - phi[i][0]) * dt;
 	        phi[i][1] += alpha* sin(phi[j][1] - phi[i][1]) * dt;
 	        phi[i][2] += alpha* sin(phi[j][2] - phi[i][2]) * dt;
 	        q_reward[i] += alpha* (q_reward[j] - q_reward[i]) * dt;
 	      }
 	      if (q_reward[i]  >= q_reward[j]){
-	        phi[j][0] += alpha* abs(cos(phi[i][0]) - cos(phi[j][0])) * dt;
-	        phi[j][1] += alpha* abs(cos(phi[i][1]) - cos(phi[j][1])) * dt;
-	        phi[j][2] += alpha* abs(cos(phi[i][2]) - cos(phi[j][2])) * dt;
-	        q_reward[j] += alpha* (q_reward[i] - q_reward[j]) * dt;
-	      }
-      }
+	        phi[j][0] += alpha* sin(phi[i][0] - phi[j][0]) * dt;
+	        phi[j][1] += alpha* sin(phi[i][1] - phi[j][1]) * dt;
+	        phi[j][2] += alpha* sin(phi[i][2] - phi[j][2]) * dt;
+		q_reward[j] += alpha* (q_reward[i] - q_reward[j]) * dt;
+      }*/
     }
 
   }
@@ -186,16 +211,20 @@ void Evolution2D::initial_integrate(int vflag)
   for (int i = 0; i < nlocal; i++)
 	  
     if (mask[i] & groupbit) {
+    
+    
       
       // Mutation noise
-      phi[i][0] += random->gaussian() * sqrt(2*dt*eta);
-      phi[i][1] += random->gaussian() * sqrt(2*dt*eta);
-      phi[i][2] += random->gaussian() * sqrt(2*dt*eta);
+      phi[i][0] += random->gaussian() * sqrt(2*dt*eta) + wca(phi[i][0] + 1) - wca(2 - phi[i][0]);
+      phi[i][1] += random->gaussian() * sqrt(2*dt*eta) + wca(phi[i][1] + 1) - wca(2 - phi[i][1]);
+      phi[i][2] += random->gaussian() * sqrt(2*dt*eta) + wca(phi[i][2] + 1) - wca(2 - phi[i][2]);
       
-      double w0 = 0.5*(1 + cos(phi[i][0]));
-      double w1 = 0.5*(1 + cos(phi[i][1]));
-      double w2 = 0.5*(1 + cos(phi[i][2]));
-       
+      
+      /*phi[i][0] += random->gaussian() * sqrt(2*dt*eta);
+      phi[i][1] += random->gaussian() * sqrt(2*dt*eta);
+      phi[i][2] += random->gaussian() * sqrt(2*dt*eta);*/
+      
+      
       if(region->match(x[i][0], x[i][1], x[i][2])){
         q_received = 0.75;
       } else {
@@ -205,8 +234,42 @@ void Evolution2D::initial_integrate(int vflag)
       q_reward[i] += alphaq*(q_received - betaq * q_reward[i]) *dt;
 
       
-      double Fa = w0;
-      if(q_received > 0.5) Fa = w1;
+      //double Fa = 0.5 * (1 + cos(phi[i][1] * 2 * 3.141592));
+      double Fa = 0;
+      switch(controller_flag){
+        case 0:
+        Fa = phi[i][0];
+        break;
+        
+        case 1:
+        Fa = 0.5*(1+cos(PI * (phi[i][0]+1)));
+        break;
+        
+        case 2:
+        Fa = 0.5*(1+cos(2*PI*phi[i][0]));
+        break;
+        
+        case 3:
+        Fa = -2*phi[i][0] + 1;
+        if(phi[i][0] >= 0.5) Fa = 2*phi[i][0] - 1;
+        break;
+        
+        case 4:
+        Fa = 0.5*(1+cos(2*PI*phi[i][0] + PI));
+        break;
+        
+        case 5:
+        Fa = 2*phi[i][0];
+        if(phi[i][0] >= 0.5) Fa = -2*phi[i][0] + 2;
+        break;
+        
+        default:
+        Fa = phi[i][0];
+        break;
+      }
+      if( phi[i][1] >= 0.5) Fa = 2*phi[i][1] - 1;
+      
+      
       double D = 0.01;
     
 
@@ -237,13 +300,13 @@ void Evolution2D::initial_integrate(int vflag)
       mu[i][0] = cos(ang_noise) * mux - sin(ang_noise) * muy;
       mu[i][1] = sin(ang_noise) * mux + cos(ang_noise) * muy;
 
-      double vx, vy;
+     /* double vx, vy;
       vx = v[i][0];
       vy = v[i][1];
 
       v[i][0] = cos(ang_noise) * vx - sin(ang_noise) * vy;
       v[i][1] = sin(ang_noise) * vx + cos(ang_noise) * vy;
-
+	*/
       // Normalise updated Active vector
       mag = sqrt(pow(mu[i][0],2)+pow(mu[i][1],2)+pow(mu[i][2],2));
       double mu_mag_inv = 1.0/mag;

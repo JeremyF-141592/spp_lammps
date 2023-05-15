@@ -34,6 +34,8 @@ class Evolution2D : public Fix {
 
   char* idregion;
   class Region *region;
+  
+  int controller_flag;
 
 };
 
