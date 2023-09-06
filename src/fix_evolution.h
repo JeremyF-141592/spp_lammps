@@ -30,6 +30,7 @@ class Evolution2D : public Fix {
   int epsilon;
   double alpha, alphaq, betaq;
   double comm_radius;
+  double D;
   char *id_temp;
 
   char* idregion;

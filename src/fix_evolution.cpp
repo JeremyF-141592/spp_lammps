@@ -287,7 +287,6 @@ void Evolution2D::initial_integrate(int vflag)
         else Fa = 1.;
         break;
         
-        
         case 11:
         // TanH
         double th = tanh((phi[i][0]- q_received)/phi[i][1]);
@@ -295,7 +294,7 @@ void Evolution2D::initial_integrate(int vflag)
         break;
         
         default:
-        Fa = phi[i][0];
+        Fa = 1.;
         break;
       }
     
