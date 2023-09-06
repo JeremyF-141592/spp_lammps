@@ -36,15 +36,16 @@ Evolution2D::Evolution2D(LAMMPS *lmp, int narg, char **arg) :
   
 {
 
-  if (narg != 14) error->all(FLERR,"Illegal evolution2D command");
+  if (narg != 14) error->all(FLERR,"Illegal evolution2D command. \n Expected arguments : eta - D - tau_v - tau_n - epsilon - alpha - alphaq - comm_radius - region - controller - seed");
   eta = utils::numeric(FLERR,arg[3],false,lmp);
-  if (eta < 0.0) error->all(FLERR,"Diffusion coefficient must be >= 0.0");
-  tau_v = utils::numeric(FLERR,arg[4],false,lmp);
-  tau_n = utils::numeric(FLERR,arg[5],false,lmp);
-  epsilon = utils::numeric(FLERR,arg[6],false,lmp);
-  alpha = utils::numeric(FLERR,arg[7],false,lmp);
-  alphaq = utils::numeric(FLERR,arg[8],false,lmp);
-  betaq = utils::numeric(FLERR,arg[9],false,lmp);
+  D = utils::numeric(FLERR,arg[4],false,lmp);
+  if (eta < 0.0) error->all(FLERR,"Diffusion coefficient eta must be >= 0.0");
+  if (D < 0.0) error->all(FLERR,"Diffusion coefficient D must be >= 0.0");
+  tau_v = utils::numeric(FLERR,arg[5],false,lmp);
+  tau_n = utils::numeric(FLERR,arg[6],false,lmp);
+  epsilon = utils::numeric(FLERR,arg[7],false,lmp);
+  alpha = utils::numeric(FLERR,arg[8],false,lmp);
+  alphaq = utils::numeric(FLERR,arg[9],false,lmp);
   comm_radius = utils::numeric(FLERR,arg[10],false,lmp);
   region = domain->get_region_by_id(arg[11]);
   idregion = utils::strdup(arg[11]);
@@ -191,18 +192,6 @@ void Evolution2D::initial_integrate(int vflag)
 		q_reward[j] += alpha* (q_reward[i] - q_reward[j]) * dt;
 	      }
       }
-      /*if (q_reward[j]  >= q_reward[i]){
-	        phi[i][0] += alpha* sin(phi[j][0] - phi[i][0]) * dt;
-	        phi[i][1] += alpha* sin(phi[j][1] - phi[i][1]) * dt;
-	        phi[i][2] += alpha* sin(phi[j][2] - phi[i][2]) * dt;
-	        q_reward[i] += alpha* (q_reward[j] - q_reward[i]) * dt;
-	      }
-	      if (q_reward[i]  >= q_reward[j]){
-	        phi[j][0] += alpha* sin(phi[i][0] - phi[j][0]) * dt;
-	        phi[j][1] += alpha* sin(phi[i][1] - phi[j][1]) * dt;
-	        phi[j][2] += alpha* sin(phi[i][2] - phi[j][2]) * dt;
-		q_reward[j] += alpha* (q_reward[i] - q_reward[j]) * dt;
-      }*/
     }
 
   }
@@ -212,19 +201,21 @@ void Evolution2D::initial_integrate(int vflag)
 	  
     if (mask[i] & groupbit) {
     
-    
-      
       // Mutation noise
-      phi[i][0] += random->gaussian() * sqrt(2*dt*eta) + wca(phi[i][0] + 1) - wca(2 - phi[i][0]);
-      phi[i][1] += random->gaussian() * sqrt(2*dt*eta) + wca(phi[i][1] + 1) - wca(2 - phi[i][1]);
-      phi[i][2] += random->gaussian() * sqrt(2*dt*eta) + wca(phi[i][2] + 1) - wca(2 - phi[i][2]);
+      phi[i][0] += random->gaussian() * sqrt(2*dt*eta); // + wca(phi[i][0] + 1) - wca(2 - phi[i][0]);
+      phi[i][1] += random->gaussian() * sqrt(2*dt*eta); // + wca(phi[i][1] + 1) - wca(2 - phi[i][1]);
+      phi[i][2] += random->gaussian() * sqrt(2*dt*eta); // + wca(phi[i][2] + 1) - wca(2 - phi[i][2]);
       
+      // Clamp values with hard collisions to 0 and 1
+      if(phi[i][0] > 1.0) phi[i][0] = 2 - phi[i][0];
+      if(phi[i][0] < 0.0) phi[i][0] = - phi[i][0];
       
-      /*phi[i][0] += random->gaussian() * sqrt(2*dt*eta);
-      phi[i][1] += random->gaussian() * sqrt(2*dt*eta);
-      phi[i][2] += random->gaussian() * sqrt(2*dt*eta);*/
+      if(phi[i][1] > 1.0) phi[i][1] = 2 - phi[i][1];
+      if(phi[i][1] < 0.0) phi[i][1] = - phi[i][1];
       
-      
+      if(phi[i][2] > 1.0) phi[i][2] = 2 - phi[i][2];
+      if(phi[i][2] < 0.0) phi[i][2] = - phi[i][2];
+        
       if(region->match(x[i][0], x[i][1], x[i][2])){
         q_received = 0.75;
       } else {
@@ -234,9 +225,10 @@ void Evolution2D::initial_integrate(int vflag)
       q_reward[i] += alphaq*(q_received - betaq * q_reward[i]) *dt;
 
       
-      //double Fa = 0.5 * (1 + cos(phi[i][1] * 2 * 3.141592));
       double Fa = 0;
       switch(controller_flag){
+      
+        // ###### AGNOSTIC CONTROLLERS ###### No response to light
         case 0:
         Fa = phi[i][0];
         break;
@@ -263,12 +255,49 @@ void Evolution2D::initial_integrate(int vflag)
         if(phi[i][0] >= 0.5) Fa = -2*phi[i][0] + 2;
         break;
         
+        // ###### PRESETS ######
+        case 6:
+        // Preset still
+        if(q_received >= 0.5) Fa = 0.;
+        else Fa = 1.;
+        break;
+        
+        case 7:
+        // Preset move
+        if(q_received >= 0.5) Fa = 0.067;
+        else Fa = 1.;
+        break;
+        
+        // ###### LEARNING ######
+        case 8:
+        // Bi-modal
+        if(q_received >= 0.5) Fa = phi[i][1];
+        else Fa = phi[i][0];
+        break;
+        
+        case 9:
+        // Threshold still
+        if(q_received >= phi[i][0]) Fa = 0.0;
+        else Fa = 1.;
+        break;
+        
+        case 10:
+        // Threshold move
+        if(q_received >= phi[i][0]) Fa = 0.067;
+        else Fa = 1.;
+        break;
+        
+        
+        case 11:
+        // TanH
+        double th = tanh((phi[i][0]- q_received)/phi[i][1]);
+        Fa = 0.5 * (1+th) * phi[i][2] + 0.5 * (1-th) * (1-phi[i][2]);
+        break;
+        
         default:
         Fa = phi[i][0];
         break;
       }
-            
-      double D = 0.01;
     
 
       // Update velocities
@@ -298,13 +327,14 @@ void Evolution2D::initial_integrate(int vflag)
       mu[i][0] = cos(ang_noise) * mux - sin(ang_noise) * muy;
       mu[i][1] = sin(ang_noise) * mux + cos(ang_noise) * muy;
 
-     /* double vx, vy;
+      double vx, vy;
       vx = v[i][0];
       vy = v[i][1];
 
       v[i][0] = cos(ang_noise) * vx - sin(ang_noise) * vy;
       v[i][1] = sin(ang_noise) * vx + cos(ang_noise) * vy;
-	*/
+      
+      
       // Normalise updated Active vector
       mag = sqrt(pow(mu[i][0],2)+pow(mu[i][1],2)+pow(mu[i][2],2));
       double mu_mag_inv = 1.0/mag;
