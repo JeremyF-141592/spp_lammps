@@ -222,10 +222,11 @@ void Evolution2D::initial_integrate(int vflag)
         q_received = 0.25;
       }
       // Update reward
-      q_reward[i] += alphaq*(q_received - betaq * q_reward[i]) *dt;
+      q_reward[i] += alphaq*(q_received - q_reward[i]) *dt;
 
       
       double Fa = 0;
+      double th = tanh((phi[i][0]- q_received)/phi[i][1]);
       switch(controller_flag){
       
         // ###### AGNOSTIC CONTROLLERS ###### No response to light
@@ -289,7 +290,6 @@ void Evolution2D::initial_integrate(int vflag)
         
         case 11:
         // TanH
-        double th = tanh((phi[i][0]- q_received)/phi[i][1]);
         Fa = 0.5 * (1+th) * phi[i][2] + 0.5 * (1-th) * (1-phi[i][2]);
         break;
         

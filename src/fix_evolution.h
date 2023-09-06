@@ -28,7 +28,7 @@ class Evolution2D : public Fix {
   double eta;
   double tau_v, tau_n;
   int epsilon;
-  double alpha, alphaq, betaq;
+  double alpha, alphaq;
   double comm_radius;
   double D;
   char *id_temp;
