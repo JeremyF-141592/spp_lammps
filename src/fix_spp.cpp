@@ -31,13 +31,14 @@ SelfAlignment2D::SelfAlignment2D(LAMMPS *lmp, int narg, char **arg) :
   
 {
 
-  if (narg != 8) error->all(FLERR,"Illegal selfAlignment2D command");
+  if (narg != 9) error->all(FLERR,"Illegal selfAlignment2D command");
   D = utils::numeric(FLERR,arg[3],false,lmp);
   if (D < 0.0) error->all(FLERR,"Diffusion coefficient must be >= 0.0");
   tau_v = utils::numeric(FLERR,arg[4],false,lmp);
   tau_n = utils::numeric(FLERR,arg[5],false,lmp);
   epsilon = utils::numeric(FLERR,arg[6],false,lmp);
-  seed = utils::numeric(FLERR,arg[7],false,lmp);
+  J = utils::numeric(FLERR,arg[7],false,lmp);
+  seed = utils::numeric(FLERR,arg[8],false,lmp);
   if (seed <= 0) error->all(FLERR,"Illegal selfAlignment2D command");
 
   // initialize Marsaglia RNG with processor-unique seed

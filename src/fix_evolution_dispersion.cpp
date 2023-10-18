@@ -179,6 +179,9 @@ void Evolution2D::initial_integrate(int vflag)
       delz = ztmp - x[j][2];
       rsq = delx * delx + dely * dely;
       if(rsq == 0) continue;
+      if (rsq < 4.0) {
+        q_reward[i] +=  alphaq*((rsq / 4.0) - q_reward[i]) *dt;
+      }
 
       if (rsq < comm_sq) {
         if (q_reward[j]  >= q_reward[i]){
@@ -217,88 +220,10 @@ void Evolution2D::initial_integrate(int vflag)
       
       if(phi[i][2] > 1.0) phi[i][2] = 2 - phi[i][2];
       if(phi[i][2] < 0.0) phi[i][2] = - phi[i][2];
-        
-      if(region->match(x[i][0], x[i][1], x[i][2])){
-        q_received = 0.75;
-      } else {
-        q_received = 0.25;
-      }
-      // Update reward
-      q_reward[i] += alphaq*(q_received - q_reward[i]) *dt;
 
       
-      double Fa = 0;
-      double th = tanh((phi[i][0]- q_received)/phi[i][1]);
-      switch(controller_flag){
-      
-        // ###### AGNOSTIC CONTROLLERS ###### No response to light
-        case 0:
-        Fa = phi[i][0];
-        break;
-        
-        case 1:
-        Fa = 0.5*(1+cos(PI * (phi[i][0]+1)));
-        break;
-        
-        case 2:
-        Fa = 0.5*(1+cos(2*PI*phi[i][0]));
-        break;
-        
-        case 3:
-        Fa = -2*phi[i][0] + 1;
-        if(phi[i][0] >= 0.5) Fa = 2*phi[i][0] - 1;
-        break;
-        
-        case 4:
-        Fa = 0.5*(1+cos(2*PI*phi[i][0] + PI));
-        break;
-        
-        case 5:
-        Fa = 2*phi[i][0];
-        if(phi[i][0] >= 0.5) Fa = -2*phi[i][0] + 2;
-        break;
-        
-        // ###### PRESETS ######
-        case 6:
-        // Preset still
-        if(q_received >= 0.5) Fa = 0.;
-        else Fa = 1.;
-        break;
-        
-        case 7:
-        // Preset move
-        if(q_received >= 0.5) Fa = 0.2;
-        else Fa = 1.;
-        break;
-        
-        // ###### LEARNING ######
-        case 8:
-        // Bi-modal
-        if(q_received >= 0.5) Fa = phi[i][1];
-        else Fa = phi[i][0];
-        break;
-        
-        case 9:
-        // Threshold still
-        if(q_received >= phi[i][0]) Fa = 0.0;
-        else Fa = 1.;
-        break;
-        
-        case 10:
-        // Threshold move
-        if(q_received >= phi[i][0]) Fa = 0.2;
-        else Fa = 1.;
-        break;
-        
-        case 11:
-        // TanH
-        Fa = 0.5 * (1+th) * phi[i][2] + 0.5 * (1-th) * (1-phi[i][2]);
-        break;
-        
-        default:
-        Fa = 1.;
-        break;
-      }
+      double Fa = phi[i][0];
+      double Di = phi[i][1] / D;
     
 
       // Update velocities
@@ -327,7 +252,7 @@ void Evolution2D::initial_integrate(int vflag)
       
       // Initialise angular noise
       double ang_noise = random->gaussian();
-      ang_noise *= sqrt(2*D*dt);
+      ang_noise *= sqrt(2*Di*dt);
       
       mux = mu[i][0];
       muy = mu[i][1];

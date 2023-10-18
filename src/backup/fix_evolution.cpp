@@ -36,22 +36,21 @@ Evolution2D::Evolution2D(LAMMPS *lmp, int narg, char **arg) :
   
 {
 
-  if (narg != 15) error->all(FLERR,"Illegal evolution2D command. \n Expected arguments : eta - D - tau_v - tau_n - epsilon - alpha - alphaq - comm_radius - region - controller - seed");
+  if (narg != 14) error->all(FLERR,"Illegal evolution2D command. \n Expected arguments : eta - D - tau_v - tau_n - epsilon - alpha - alphaq - comm_radius - region - controller - seed");
   eta = utils::numeric(FLERR,arg[3],false,lmp);
   D = utils::numeric(FLERR,arg[4],false,lmp);
   if (eta < 0.0) error->all(FLERR,"Diffusion coefficient eta must be >= 0.0");
   if (D < 0.0) error->all(FLERR,"Diffusion coefficient D must be >= 0.0");
   tau_v = utils::numeric(FLERR,arg[5],false,lmp);
   tau_n = utils::numeric(FLERR,arg[6],false,lmp);
-  inertiaJ = utils::numeric(FLERR,arg[7],false,lmp);
-  epsilon = utils::numeric(FLERR,arg[8],false,lmp);
-  alpha = utils::numeric(FLERR,arg[9],false,lmp);
-  alphaq = utils::numeric(FLERR,arg[10],false,lmp);
-  comm_radius = utils::numeric(FLERR,arg[11],false,lmp);
-  region = domain->get_region_by_id(arg[12]);
-  idregion = utils::strdup(arg[12]);
-  controller_flag = utils::numeric(FLERR,arg[13],false,lmp);
-  seed = utils::numeric(FLERR,arg[14],false,lmp);
+  epsilon = utils::numeric(FLERR,arg[7],false,lmp);
+  alpha = utils::numeric(FLERR,arg[8],false,lmp);
+  alphaq = utils::numeric(FLERR,arg[9],false,lmp);
+  comm_radius = utils::numeric(FLERR,arg[10],false,lmp);
+  region = domain->get_region_by_id(arg[11]);
+  idregion = utils::strdup(arg[11]);
+  controller_flag = utils::numeric(FLERR,arg[12],false,lmp);
+  seed = utils::numeric(FLERR,arg[13],false,lmp);
   if (seed <= 0) error->all(FLERR,"Illegal evolution2D command");
 
   // initialize Marsaglia RNG with processor-unique seed
@@ -104,7 +103,6 @@ void Evolution2D::initial_integrate(int vflag)
   double **v = atom->v;
   double **f = atom->f;
   double **mu = atom->mu;
-  double **omega = atom->omega;
   double **phi = atom->phi;
   double *q_reward = atom->q_reward;
   double mag;
@@ -267,7 +265,7 @@ void Evolution2D::initial_integrate(int vflag)
         
         case 7:
         // Preset move
-        if(q_received >= 0.5) Fa = 0.2;
+        if(q_received >= 0.5) Fa = 0.25;
         else Fa = 1.;
         break;
         
@@ -286,7 +284,7 @@ void Evolution2D::initial_integrate(int vflag)
         
         case 10:
         // Threshold move
-        if(q_received >= phi[i][0]) Fa = 0.2;
+        if(q_received >= phi[i][0]) Fa = 0.067;
         else Fa = 1.;
         break;
         
@@ -313,17 +311,10 @@ void Evolution2D::initial_integrate(int vflag)
 
        // Update Active Vector
       double mux, muy;
-      if(inertiaJ == 0){
-        mux = epsilon * (mu[i][1]*mu[i][1]*v[i][0] - mu[i][0]*mu[i][1]*v[i][1]) / tau_n;
-        muy = epsilon * (mu[i][0]*mu[i][0]*v[i][1] - mu[i][0]*mu[i][1]*v[i][0]) / tau_n;
-        mu[i][0] += dt * mux;
-        mu[i][1] += dt * muy;
-      } else {
-        omega[i][2] += dt * (epsilon * (mu[i][0]* v[i][1] - mu[i][1]*v[i][0]) - tau_n*omega[i][2]) / inertiaJ;
-        //omega[i][2] += dt /inertiaJ;
-        mu[i][0] += -dt * mu[i][1] * omega[i][2];
-        mu[i][1] += dt * mu[i][0] * omega[i][2] ;
-      }
+      mux = epsilon * (mu[i][1]*mu[i][1]*v[i][0] - mu[i][0]*mu[i][1]*v[i][1]) / tau_n;
+      muy = epsilon * (mu[i][0]*mu[i][0]*v[i][1] - mu[i][0]*mu[i][1]*v[i][0]) / tau_n;
+      mu[i][0] += dt * mux;
+      mu[i][1] += dt * muy; 
       
       // Initialise angular noise
       double ang_noise = random->gaussian();
@@ -335,12 +326,12 @@ void Evolution2D::initial_integrate(int vflag)
       mu[i][0] = cos(ang_noise) * mux - sin(ang_noise) * muy;
       mu[i][1] = sin(ang_noise) * mux + cos(ang_noise) * muy;
 
-      /*double vx, vy;
+      double vx, vy;
       vx = v[i][0];
       vy = v[i][1];
 
       v[i][0] = cos(ang_noise) * vx - sin(ang_noise) * vy;
-      v[i][1] = sin(ang_noise) * vx + cos(ang_noise) * vy;*/
+      v[i][1] = sin(ang_noise) * vx + cos(ang_noise) * vy;
       
       
       // Normalise updated Active vector

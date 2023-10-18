@@ -27,7 +27,7 @@ class SelfAlignment2D : public Fix {
   int seed;
   double D;
   int epsilon;
-  double tau_v, tau_n;
+  double tau_v, tau_n, J;
   char *id_temp;
 
 };
