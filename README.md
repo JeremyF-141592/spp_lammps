@@ -42,6 +42,25 @@ This yields two executable files, `lmp_serial` and `lmp_mpi`, allowing to execut
 
 # Quick start
 
-Two example scripts are given in the example folder.
+Two example scripts are given in the example folder. All parameters, regarding self-alignment and learning, can be modified through script variable defined on top of the example scripts. The lit region of the experiments is defined with the lammps `region` command, as a cylinder in both examples. Once all parameters are set, the script can be passed to the executable, either in serial or parallel :
+
+```
+lmp_serial -in in.myscript.run
+mpiexec -n NumberOfProcesses lmp_mpi -in in.myscript.run
+```
+
+A result folder should be created to store the resulting data.
+In order to execute the N=256 preset example with 8 processes, starting from the parent directory of spp_lammps and lammps, this would yield :
+
+```
+mkdir ExamplePreset
+cd ExamplePreset
+mpiexec -n 8 ../lammps/src/lmp_mpi -in ../spp_lammps/examples/in.phototaxis256.run
+```
+
+# Notes
+By default, the light intensity received in the dark is set to 0.25 and 0.75 in the light.
+
+The type of controller can be chosen from a set of pre-programmed controllers shown on Controllers_annotated.png in this repository. However, any controller can be programmed following the procedure described in the Wiki.
 
 
