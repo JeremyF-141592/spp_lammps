@@ -29,18 +29,26 @@
 using namespace LAMMPS_NS;
 using namespace FixConst;
 
-/* ---------------------------------------------------------------------- */
 
 Evolution2D::Evolution2D(LAMMPS *lmp, int narg, char **arg) :
   Fix(lmp, narg, arg)
   
 {
+  
+/*
+#########################################################################
 
+    Parameters definition
+    
+#########################################################################
+*/
+ 
   if (narg != 15) error->all(FLERR,"Illegal evolution2D command. \n Expected arguments : eta - D - tau_v - tau_n - epsilon - alpha - alphaq - comm_radius - region - controller - seed");
   eta = utils::numeric(FLERR,arg[3],false,lmp);
   D = utils::numeric(FLERR,arg[4],false,lmp);
   if (eta < 0.0) error->all(FLERR,"Diffusion coefficient eta must be >= 0.0");
   if (D < 0.0) error->all(FLERR,"Diffusion coefficient D must be >= 0.0");
+  
   tau_v = utils::numeric(FLERR,arg[5],false,lmp);
   tau_n = utils::numeric(FLERR,arg[6],false,lmp);
   inertiaJ = utils::numeric(FLERR,arg[7],false,lmp);
@@ -57,7 +65,6 @@ Evolution2D::Evolution2D(LAMMPS *lmp, int narg, char **arg) :
   // initialize Marsaglia RNG with processor-unique seed
   random = new RanMars(lmp,seed + comm->me);
 }
-/* ---------------------------------------------------------------------- */
 
 Evolution2D::~Evolution2D()
 {
@@ -66,7 +73,6 @@ Evolution2D::~Evolution2D()
 
 }
 
-/* ---------------------------------------------------------------------- */
 
 
 int Evolution2D::setmask()
@@ -76,22 +82,10 @@ int Evolution2D::setmask()
   return mask;
 }
 
-/* ---------------------------------------------------------------------- */
 
 void Evolution2D::init()
 {
 
-}
-
-float wca(float r){
-  float a = 8;
-  bool leaky = true;
-  
-  if(leaky) r += (pow(2, 1./a)-1);
-  if(r > pow(2, 1./a)){
-    return 0.0;
-  }
-  return 4 * (pow(r, -2*a) - pow(r, -a)) + 1;
 }
 
 
@@ -133,6 +127,14 @@ void Evolution2D::initial_integrate(int vflag)
   // Set initial particle orientation
   if (step <= 1) {
     for (int i = 0; i < nlocal; i++){       
+    
+/*
+#########################################################################
+
+    Initial conditions
+    
+#########################################################################
+*/
        // Initialize Active vector with random direction at beginining of simulation
        mu[i][0] = random->gaussian();       
        mu[i][1] = random->gaussian(); 
@@ -181,6 +183,15 @@ void Evolution2D::initial_integrate(int vflag)
       if(rsq == 0) continue;
 
       if (rsq < comm_sq) {
+
+/*
+#########################################################################
+
+    Communication between j and i
+    
+#########################################################################
+*/
+
         if (q_reward[j]  >= q_reward[i]){
 	        phi[i][0] += alpha* (phi[j][0] - phi[i][0]) * dt;
 	        phi[i][1] += alpha* (phi[j][1] - phi[i][1]) * dt;
@@ -191,7 +202,7 @@ void Evolution2D::initial_integrate(int vflag)
 	        phi[j][0] += alpha* (phi[i][0] - phi[j][0]) * dt;
 	        phi[j][1] += alpha* (phi[i][1] - phi[j][1]) * dt;
 	        phi[j][2] += alpha* (phi[i][2] - phi[j][2]) * dt;
-		q_reward[j] += alpha* (q_reward[i] - q_reward[j]) * dt;
+		      q_reward[j] += alpha* (q_reward[i] - q_reward[j]) * dt;
 	      }
       }
     }
@@ -202,11 +213,19 @@ void Evolution2D::initial_integrate(int vflag)
   for (int i = 0; i < nlocal; i++)
 	  
     if (mask[i] & groupbit) {
+
+
+/*
+#########################################################################
+
+    Model definition
     
+#########################################################################
+*/
       // Mutation noise
-      phi[i][0] += random->gaussian() * sqrt(2*dt*eta); // + wca(phi[i][0] + 1) - wca(2 - phi[i][0]);
-      phi[i][1] += random->gaussian() * sqrt(2*dt*eta); // + wca(phi[i][1] + 1) - wca(2 - phi[i][1]);
-      phi[i][2] += random->gaussian() * sqrt(2*dt*eta); // + wca(phi[i][2] + 1) - wca(2 - phi[i][2]);
+      phi[i][0] += random->gaussian() * sqrt(2*dt*eta); 
+      phi[i][1] += random->gaussian() * sqrt(2*dt*eta); 
+      phi[i][2] += random->gaussian() * sqrt(2*dt*eta);
       
       // Clamp values with hard collisions to 0 and 1
       if(phi[i][0] > 1.0) phi[i][0] = 2 - phi[i][0];
