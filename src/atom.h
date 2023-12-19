@@ -75,7 +75,6 @@ class Atom : protected Pointers {
   double *q, **mu;
   
   // EVOLUTION2D
-  
   double **phi;
   double *q_reward;
   

@@ -118,12 +118,10 @@ Atom::Atom(LAMMPS *lmp) : Pointers(lmp)
   mu = nullptr;
   
   // EVOLUTION2D
-  
   phi = nullptr;
   q_reward = nullptr;
   
   // TOOTHBRUSH
-  
   omega_mu = nullptr;
   bias = nullptr;
 
@@ -2667,6 +2665,7 @@ void *Atom::extract(const char *name)
   if (strcmp(name,"f") == 0) return (void *) f;
   if (strcmp(name,"molecule") == 0) return (void *) molecule;
   
+  // EVOLUTION2D
   if (strcmp(name,"phi") == 0) return (void *) phi;
   if (strcmp(name,"q_reward") == 0) return (void *) q_reward;
   
@@ -2798,7 +2797,7 @@ int Atom::extract_datatype(const char *name)
   if (strcmp(name,"f") == 0) return LAMMPS_DOUBLE_2D;
   if (strcmp(name,"molecule") == 0) return LAMMPS_TAGINT;
   
-  
+  // EVOLUTION2D
   if (strcmp(name,"phi") == 0) return LAMMPS_DOUBLE_2D;
   if (strcmp(name,"q_reward") == 0) return LAMMPS_DOUBLE;
   

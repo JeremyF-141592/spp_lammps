@@ -82,10 +82,6 @@ void SelfAlignment2D::initial_integrate(int vflag)
   double **mu = atom->mu;
   double mag;
 
-
-  // Using 'radius' to store particle orentiation angle
-  //double *phi = atom->radius;
-
   int *type = atom->type;
   int *mask = atom->mask;
   int nlocal = atom->nlocal;
@@ -144,12 +140,12 @@ void SelfAlignment2D::initial_integrate(int vflag)
       mu[i][0] = cos(ang_noise) * mux - sin(ang_noise) * muy;
       mu[i][1] = sin(ang_noise) * mux + cos(ang_noise) * muy;
 
-      double vx, vy;
+      /*double vx, vy;
       vx = v[i][0];
       vy = v[i][1];
 
       v[i][0] = cos(ang_noise) * vx - sin(ang_noise) * vy;
-      v[i][1] = sin(ang_noise) * vx + cos(ang_noise) * vy;
+      v[i][1] = sin(ang_noise) * vx + cos(ang_noise) * vy;*/
 
 
       // Normalise updated Active vector

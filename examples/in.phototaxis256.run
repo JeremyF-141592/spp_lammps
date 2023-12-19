@@ -9,6 +9,7 @@ variable	dt equal 0.001
 variable	eta index 0.1		# Mutation intensity
 variable	tau_n index 0.1		# Alignment to forces carateristic time, negative values for fronters
 variable	tau_v equal 1 		# Inertia relative to propulsion
+variable	J equal 0		# Angular inertia
 variable	D equal 0.02		# Angular diffusion coefficient
 variable	epsilon equal 1		# -1 Fronter ; 0 ABP ; +1 Aligner
 variable	alpha equal 1000	# Communication rate
@@ -19,13 +20,11 @@ variable	controller equal 6	# Controller type (please refer to the controller ta
 region light cylinder z 0 0 7.9 -10 10	# Lit region for phototaxis
 
 # ----------------------------------------------------------------------
-
-variable	atoms_l equal 4
-variable	2L equal 2*$L
+# Perform a short brownian motion with a repulsive potential gradually increasing from zero
+# This step is made to remove overlaps before the main run
 
 variable	WCA_cut equal 1.122
 variable 	runtime_Soft equal 50000
-variable	runtime_Eq equal 50000
 
 units           lj
 dimension       3
@@ -49,18 +48,17 @@ run             ${runtime_Soft}
 unfix		1
 unfix           2
 
-#set up main run: change particle interactions to  WCA.
+# Set up main run: change particle interactions to  WCA.
 pair_style	lj/cut ${WCA_cut} 
 pair_modify	shift yes #shifts LJ to become WCA
 pair_coeff	* * 1 1 ${WCA_cut}  #Cutoff LJ at minima to become WCA
 
-#Equilibrate system
-
 reset_timestep	0
 
-#Main run
-fix             evo2D all evo2D ${eta} ${D} ${tau_v} ${tau_n} ${epsilon} ${alpha} ${alphaq} ${comm_radius} light ${controller} ${Seed} 
-dump            tj all custom ${dump_freq} evo2D_${N}_${eta}_${D}_${tau_v}_${tau_n}_${epsilon}_${alpha}_${alphaq}_${comm_radius}_${controller}_${Seed}.cfg id x y vx vy mux muy phi0 phi1 qreward
+# ----------------------------------------------------------------------
+# Main run
+fix             evo2D all evo2D ${eta} ${D} ${tau_v} ${tau_n} ${J} ${epsilon} ${alpha} ${alphaq} ${comm_radius} light ${controller} ${Seed} 
+dump            tj all custom ${dump_freq} evo2D_${N}_${eta}_${D}_${tau_v}_${tau_n}_${J}_${epsilon}_${alpha}_${alphaq}_${comm_radius}_${controller}_${Seed}.cfg id x y vx vy mux muy phi0 phi1 qreward
 run             ${runtime_Main}
 
 

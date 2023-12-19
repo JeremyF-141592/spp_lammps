@@ -43,7 +43,7 @@ Evolution2D::Evolution2D(LAMMPS *lmp, int narg, char **arg) :
 #########################################################################
 */
  
-  if (narg != 15) error->all(FLERR,"Illegal evolution2D command. \n Expected arguments : eta - D - tau_v - tau_n - epsilon - alpha - alphaq - comm_radius - region - controller - seed");
+  if (narg != 15) error->all(FLERR,"Illegal evolution2D command. \n Expected arguments : eta - D - tau_v - tau_n - J - epsilon - alpha - alphaq - comm_radius - region - controller - seed");
   eta = utils::numeric(FLERR,arg[3],false,lmp);
   D = utils::numeric(FLERR,arg[4],false,lmp);
   if (eta < 0.0) error->all(FLERR,"Diffusion coefficient eta must be >= 0.0");
@@ -105,10 +105,6 @@ void Evolution2D::initial_integrate(int vflag)
 
   double F_min = 0;
   double D_min = 0;
-
-
-  // Using 'radius' to store particle orentiation angle
-  //double *phi = atom->radius;
 
   int *type = atom->type;
   int *mask = atom->mask;
