@@ -63,4 +63,7 @@ By default, the light intensity received in the dark is set to 0.25 and 0.75 in 
 
 The type of controller can be chosen from a set of pre-programmed controllers shown on Controllers_annotated.png in this repository. However, any controller can be programmed following the procedure described in the Wiki.
 
+The name of the dump file is set through lammps scripts. In the examples, the following format for each file is used :
+evo2D_${N}_${eta}_${D}_${tau_v}_${tau_n}_${J}_${epsilon}_${alpha}_${alphaq}_${comm_radius}_${controller}_${Seed}.cfg
+
 
